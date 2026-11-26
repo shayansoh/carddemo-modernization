@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --logger "console;verbosity=normal"
+
+  locked-paths:
+    name: Implementer PRs leave tests and specs alone
+    if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check changed paths
+        run: |
+          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          echo "Changed files:"
+          echo "$changed"
+          locked=$(echo "$changed" | grep -E '^(tests/|docs/specs/)' || true)
+          if [ -n "$locked" ]; then
+            echo "::error::Implementer pull requests must not change tests/ or docs/specs/:"
+            echo "$locked"
+            exit 1
+          fi
