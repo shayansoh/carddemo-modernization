@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "additionalDirectories": ["~/projects/reference/carddemo"],
+    "deny": [
+      "Read(./.env)",
+      "Edit(~/projects/reference/carddemo/**)",
+      "Bash(git push origin main)",
+      "Bash(git push origin main *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(gh pr merge *)"
+    ],
+    "ask": [
+      "Bash(docker compose down *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-git.sh",
+            "args": []
+          }
+        ]
+      }
+    ]
+  }
+}
