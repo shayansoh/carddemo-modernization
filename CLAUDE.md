@@ -27,6 +27,7 @@ Rewrite of the AWS CardDemo COBOL application (CICS, VSAM, JCL batch) in C# on .
 4. One task, one branch, one pull request, small enough to review in about 15 minutes.
 5. When unsure, stop and write an open question rather than guess.
 6. Never modify the reference clone.
+7. Never push to `main` or merge a pull request. Push your branch, open a pull request with `gh pr create`, and stop for review.
 
 ## Conventions
 
