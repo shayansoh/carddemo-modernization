@@ -37,3 +37,6 @@ Rewrite of the AWS CardDemo COBOL application (CICS, VSAM, JCL batch) in C# on .
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`).
 - Branch names: `<type>/<short-description>`, for example `feat/account-view-api`.
 - A new architectural decision gets a new ADR in `docs/adr/`. Accepted ADRs are never edited; a later ADR supersedes them.
+## Current milestone
+
+M1 (discovery). Read `docs/plan/m1-discovery.md` before starting any task.
