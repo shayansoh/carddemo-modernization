@@ -1,0 +1,335 @@
+program: COSGN00C
+source: app/cbl/COSGN00C.cbl
+rules:
+  - id: COSGN00C-001
+    statement: >-
+      Sign-on is started by online transaction CC00, which runs this program. The
+      program is the sign-on (login) screen of the CardDemo application.
+    category: navigation
+    module: sign-on
+    citations:
+      - app/csd/CARDDEMO.CSD:378-379
+      - app/csd/CARDDEMO.CSD:249-250
+      - app/cbl/COSGN00C.cbl:2-5
+    confidence: high
+
+  - id: COSGN00C-002
+    statement: >-
+      When the transaction is started fresh (no data handed over from a previous
+      screen interaction), the system shows an empty sign-on screen with the
+      cursor placed in the User ID field.
+    category: presentation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:80-83
+      - app/bms/COSGN00.bms:156-160
+    confidence: high
+
+  - id: COSGN00C-003
+    statement: >-
+      After every screen it sends (other than the exit message), the program ends the
+      current step and arranges for the user's next key press on that terminal to
+      come back into the sign-on transaction CC00, carrying the shared session data
+      area with it (a conversation one screen at a time).
+    category: navigation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:37
+      - app/cbl/COSGN00C.cbl:98-102
+    confidence: high
+    open_question: >-
+      On the error paths the shared session data area returned is the program's own
+      working copy, which is never initialised from the incoming data or cleared
+      (only the user ID part is filled in, at COSGN00C.cbl:132-134). What the other
+      parts contain on the next interaction is not settled by the code.
+
+  - id: COSGN00C-004
+    statement: >-
+      On a returning interaction, the key the user pressed decides the action - Enter
+      attempts sign-on, F3 exits, and any other key is rejected.
+    category: navigation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:84-95
+      - app/bms/COSGN00.bms:201-205
+    confidence: high
+
+  - id: COSGN00C-005
+    statement: >-
+      When the user presses F3, the screen is cleared and replaced by the plain text
+      message "Thank you for using CardDemo application..." and the session ends
+      without scheduling any further transaction.
+    category: navigation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:88-90
+      - app/cbl/COSGN00C.cbl:162-172
+      - app/cpy/CSMSG01Y.cpy:18-19
+    confidence: high
+    open_question: >-
+      Other programs transfer control to this program with session data (for
+      example on their exit keys). Whether the key pressed in that other program is
+      then evaluated here, so that arriving via F3 immediately shows the thank-you
+      message rather than the sign-on screen, depends on the callers and on CICS
+      key handling and is not settled by COSGN00C alone.
+
+  - id: COSGN00C-006
+    statement: >-
+      When the user presses any key other than Enter or F3, the sign-on screen is
+      shown again with the message "Invalid key pressed. Please see below...".
+    category: error-handling
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:91-94
+      - app/cpy/CSMSG01Y.cpy:20-21
+    confidence: high
+    open_question: >-
+      On this path the program does not read the screen and does not reset the
+      output screen layout or choose a cursor position (compare COSGN00C.cbl:81-82).
+      Whether the typed User ID is kept and where the cursor lands is not settled by
+      the code.
+
+  - id: COSGN00C-007
+    statement: >-
+      When Enter is pressed and the User ID is blank, sign-on is refused with the
+      message "Please enter User ID ..." and the cursor is placed on the User ID
+      field. The user file is not consulted.
+    category: validation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:117-122
+      - app/cbl/COSGN00C.cbl:138-140
+    confidence: high
+
+  - id: COSGN00C-008
+    statement: >-
+      When Enter is pressed with a User ID but a blank Password, sign-on is refused
+      with the message "Please enter Password ..." and the cursor is placed on the
+      Password field. The user file is not consulted. The User ID is checked first,
+      so only one of the two messages is ever shown.
+    category: validation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:117
+      - app/cbl/COSGN00C.cbl:123-127
+      - app/cbl/COSGN00C.cbl:138-140
+    confidence: high
+
+  - id: COSGN00C-009
+    statement: >-
+      The User ID and Password are each up to 8 characters, and both are converted to
+      upper case before they are used, so sign-on is not sensitive to the case the
+      user types in.
+    category: validation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:45-46
+      - app/cbl/COSGN00C.cbl:132-136
+      - app/bms/COSGN00.bms:156-160
+      - app/bms/COSGN00.bms:175-180
+    confidence: high
+
+  - id: COSGN00C-010
+    statement: >-
+      The entered password is compared, after conversion to upper case, exactly
+      against the password stored on the user record as held. A stored password
+      containing lower-case letters can therefore never be matched.
+    category: authorization
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:135-136
+      - app/cbl/COSGN00C.cbl:223
+      - app/cpy/CSUSR01Y.cpy:21
+    confidence: medium
+    open_question: >-
+      Whether stored passwords are always kept in upper case depends on how user
+      records are created and loaded (user maintenance programs, data files), which
+      is outside this program.
+
+  - id: COSGN00C-011
+    statement: >-
+      Passwords are stored in the user security file as plain 8-character text and
+      checked by direct comparison; no encryption or hashing is applied by this
+      program.
+    category: authorization
+    module: sign-on
+    citations:
+      - app/cpy/CSUSR01Y.cpy:21
+      - app/cbl/COSGN00C.cbl:223
+    confidence: high
+
+  - id: COSGN00C-012
+    statement: >-
+      To verify a sign-on, the system reads the user's record from the user security
+      file (USRSEC), looking it up by the upper-cased User ID. The record holds the
+      user ID, first name, last name, password and user type. The file is only read;
+      nothing is written or updated.
+    category: data-access
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:39
+      - app/cbl/COSGN00C.cbl:211-219
+      - app/cpy/CSUSR01Y.cpy:17-23
+      - app/csd/CARDDEMO.CSD:88-89
+    confidence: high
+
+  - id: COSGN00C-013
+    statement: >-
+      When no user record exists for the entered User ID, sign-on is refused with the
+      message "User not found. Try again ..." and the cursor is placed on the User ID
+      field.
+    category: error-handling
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:247-251
+    confidence: high
+
+  - id: COSGN00C-014
+    statement: >-
+      When the user file cannot be read for any reason other than the user not being
+      found, sign-on is refused with the message "Unable to verify the User ..." and
+      the cursor is placed on the User ID field. The underlying error is not shown or
+      recorded.
+    category: error-handling
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:252-256
+    confidence: high
+
+  - id: COSGN00C-015
+    statement: >-
+      When the user exists but the password does not match, sign-on is refused with
+      the message "Wrong Password. Try again ..." and the cursor is placed on the
+      Password field. The user may simply try again; there is no count of failed
+      attempts, no lockout and no logging of the failure.
+    category: authorization
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:241-246
+    confidence: high
+    open_question: >-
+      The absence of lockout is inferred from this program only; whether any other
+      control (for example CICS or external security) limits attempts is not visible
+      here.
+
+  - id: COSGN00C-016
+    statement: >-
+      On successful sign-on the system records in the shared session data that the
+      user came from the sign-on transaction CC00 and program COSGN00C, stores the
+      signed-on User ID and the user type from the user record, and marks the next
+      program as being entered for the first time.
+    category: navigation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:222-228
+      - app/cpy/COCOM01Y.cpy:20-31
+    confidence: high
+
+  - id: COSGN00C-017
+    statement: >-
+      After successful sign-on, an administrator (user type A) is taken to the
+      administration menu (program COADM01C); every other user is taken to the main
+      menu (program COMEN01C).
+    category: authorization
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:230-240
+      - app/cpy/COCOM01Y.cpy:26-28
+    confidence: high
+    open_question: >-
+      Only A (administrator) and U (regular user) are named as user types. A user
+      record with any other or blank type is sent to the main menu like a regular
+      user; whether such records can exist is not settled by this program.
+
+  - id: COSGN00C-018
+    statement: >-
+      Every time the sign-on screen is shown, the header carries the application
+      titles "AWS Mainframe Modernization" and "CardDemo", the transaction ID CC00,
+      the program name COSGN00C, today's date as mm/dd/yy (two-digit year), the
+      current time as hh:mm:ss, and the CICS application ID and system ID.
+    category: presentation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:147
+      - app/cbl/COSGN00C.cbl:177-204
+      - app/cpy/COTTL01Y.cpy:17-22
+      - app/cpy/CSDAT01Y.cpy:30-41
+      - app/bms/COSGN00.bms:29-93
+    confidence: high
+
+  - id: COSGN00C-019
+    statement: >-
+      The sign-on screen is cleared and redrawn on every display. Any message is
+      shown in red, highlighted, on line 23; the message area holds 78 characters.
+      The message area is cleared at the start of every interaction, so a message
+      appears only for the interaction that caused it.
+    category: presentation
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:75-78
+      - app/cbl/COSGN00C.cbl:149-157
+      - app/bms/COSGN00.bms:197-200
+    confidence: high
+
+  - id: COSGN00C-020
+    statement: >-
+      The password is typed into a hidden (non-displaying) field, so it is not visible
+      on the screen. The screen also shows the instruction "Type your User ID and
+      Password, then press ENTER:" and the key help "ENTER=Sign-on  F3=Exit".
+    category: presentation
+    module: sign-on
+    citations:
+      - app/bms/COSGN00.bms:145-150
+      - app/bms/COSGN00.bms:175-180
+      - app/bms/COSGN00.bms:201-205
+    confidence: high
+
+  - id: COSGN00C-021
+    statement: >-
+      The password field is defined with an initial value of eight underscores. If
+      that default is sent back unchanged, or only partly overtyped, the underscores
+      may form part of the password that is checked, rather than the field being
+      treated as blank.
+    category: validation
+    module: sign-on
+    citations:
+      - app/bms/COSGN00.bms:175-180
+      - app/cbl/COSGN00C.cbl:81
+      - app/cbl/COSGN00C.cbl:123
+    confidence: low
+    open_question: >-
+      Depends on 3270 terminal and BMS behaviour not visible in the code - whether the
+      initial underscores are actually displayed and returned when the screen is sent
+      with an output layout filled with low values, and whether users clear the field
+      before typing. Needs a test on the running system.
+
+  - id: COSGN00C-022
+    statement: >-
+      The result of receiving the screen input is not checked. If the screen data
+      cannot be received, the program carries on and applies the blank User ID and
+      Password checks to whatever is in the input fields.
+    category: error-handling
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:110-118
+    confidence: low
+    open_question: >-
+      The receive response is captured but never tested. What the input fields hold
+      after a failed receive (for example when no field was modified) is CICS
+      behaviour not visible in the code.
+
+  - id: COSGN00C-023
+    statement: >-
+      The entered User ID, upper-cased, is placed in the shared session data even when
+      sign-on later fails, and that data is handed back with the next interaction.
+    category: other
+    module: sign-on
+    citations:
+      - app/cbl/COSGN00C.cbl:132-134
+      - app/cbl/COSGN00C.cbl:98-102
+    confidence: medium
+    open_question: >-
+      Category other because this is a side effect on session state with no business
+      purpose visible in the code; it is neither a validation nor a navigation rule.
+      Whether anything relies on the user ID being set after a failed sign-on is not
+      settled here, since the program never reads the incoming session data.
