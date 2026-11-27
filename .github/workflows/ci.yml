@@ -50,6 +50,18 @@ jobs:
         working-directory: tools/check_citations
         run: uv run --locked --dev pytest -q
 
+      - name: Test inventory
+        working-directory: tools/inventory
+        run: uv run --locked --dev pytest -q
+
+      - name: Check the inventory is up to date
+        run: |
+          uv run --locked --project tools/inventory tools/inventory/inventory.py --clone "$CARDDEMO_REF"
+          if ! git diff --exit-code -- docs/current-state/ || [ -n "$(git ls-files --others --exclude-standard -- docs/current-state/)" ]; then
+            echo "::error::Generated inventory files in docs/current-state are out of date. Run tools/inventory and commit the result."
+            exit 1
+          fi
+
       - name: Check rule citations
         run: |
           shopt -s nullglob
