@@ -54,6 +54,10 @@ jobs:
         working-directory: tools/inventory
         run: uv run --locked --dev pytest -q
 
+      - name: Test diff_analyses
+        working-directory: tools/diff_analyses
+        run: uv run --locked --dev pytest -q
+
       - name: Check the inventory is up to date
         run: |
           uv run --locked --project tools/inventory tools/inventory/inventory.py --clone "$CARDDEMO_REF"
