@@ -77,7 +77,7 @@ $defs:
           - presentation     # what is shown and how it is formatted
           - batch-control    # job steps, sequencing, restart, control totals
           - reporting        # report and statement content
-          - other            # fits none of the above; say why in the statement
+          - other            # fits none of the above; explain why in open_question
       module:
         description: >-
           Business module the rule belongs to, lower-case kebab-case (for example
@@ -103,12 +103,23 @@ $defs:
         type: string
         enum: [high, medium, low]
       open_question:
-        description: What could not be confirmed from the code. Required when confidence is low.
+        description: >-
+          What could not be confirmed from the code, or why no category fits. Required
+          when confidence is low or when category is other.
         type: string
         minLength: 10
-    if:
-      properties:
-        confidence:
-          const: low
-    then:
-      required: [open_question]
+    allOf:
+      - if:
+          required: [confidence]
+          properties:
+            confidence:
+              const: low
+        then:
+          required: [open_question]
+      - if:
+          required: [category]
+          properties:
+            category:
+              const: other
+        then:
+          required: [open_question]

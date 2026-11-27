@@ -183,6 +183,15 @@ def test_last_line_and_single_line_range_are_accepted(tmp_path, clone, capsys):
     assert code == 0, out
 
 
-def test_other_category_is_accepted(tmp_path, clone, capsys):
-    code, out = check(tmp_path, clone, {"PROG1.yaml": GOOD_RULE.replace("category: validation", "category: other")}, capsys)
+def test_other_category_without_open_question_fails(tmp_path, clone, capsys):
+    text = GOOD_RULE.replace("category: validation", "category: other")
+    code, out = check(tmp_path, clone, {"PROG1.yaml": text}, capsys)
+    assert code == 1
+    assert "schema" in out and "open_question" in out
+
+
+def test_other_category_with_open_question_passes(tmp_path, clone, capsys):
+    text = GOOD_RULE.replace("category: validation", "category: other")
+    text += "    open_question: Fits no category; it is a one-off data conversion step.\n"
+    code, out = check(tmp_path, clone, {"PROG1.yaml": text}, capsys)
     assert code == 0, out
