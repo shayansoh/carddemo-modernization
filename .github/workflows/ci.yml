@@ -28,6 +28,40 @@ jobs:
       - name: Test
         run: dotnet test --no-build --configuration Release --logger "console;verbosity=normal"
 
+  discovery:
+    name: Discovery tools and citations
+    runs-on: ubuntu-latest
+    env:
+      CARDDEMO_REF: ${{ github.workspace }}/reference/carddemo
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check out the CardDemo reference at the pinned commit
+        uses: actions/checkout@v7
+        with:
+          repository: aws-samples/aws-mainframe-modernization-carddemo
+          ref: 59cc6c2fd7ebd7ef7925cad552a01a4b8b6e4d5e
+          path: reference/carddemo
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Test check_citations
+        working-directory: tools/check_citations
+        run: uv run --locked --dev pytest -q
+
+      - name: Check rule citations
+        run: |
+          shopt -s nullglob
+          dirs=(docs/current-state/rules docs/current-state/analysis-*/rules)
+          checked=0
+          for dir in "${dirs[@]}"; do
+            [ -d "$dir" ] || continue
+            uv run --locked --project tools/check_citations tools/check_citations/check_citations.py "$dir" "$CARDDEMO_REF"
+            checked=$((checked + 1))
+          done
+          [ "$checked" -gt 0 ] || echo "No rule folders yet; nothing to check."
+
   locked-paths:
     name: Implementer PRs leave tests and specs alone
     if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'feat/')
