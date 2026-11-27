@@ -1,0 +1,113 @@
+# Schema for one business-rule file per legacy program.
+#
+# Files live in:
+#   docs/current-state/analysis-a/rules/<PROGRAM>.yaml   (Analyst A)
+#   docs/current-state/analysis-b/rules/<PROGRAM>.yaml   (Analyst B)
+#   docs/current-state/rules/<PROGRAM>.yaml              (reconciled, after owner review)
+#
+# This is JSON Schema (draft 2020-12) written as YAML. tools/check_citations validates
+# every rule file against it before checking citations against the reference clone.
+#
+# Shape of a file (placeholders only; this is not a claim about CardDemo):
+#
+#   program: <PROGRAM>
+#   source: app/cbl/<PROGRAM>.cbl
+#   rules:
+#     - id: <PROGRAM>-001
+#       statement: <what the system does, and when, in plain business language>
+#       category: validation
+#       module: <module>
+#       citations:
+#         - app/cbl/<PROGRAM>.cbl:<line>
+#         - app/cpy/<COPYBOOK>.cpy:<first>-<last>
+#       confidence: high
+#     - id: <PROGRAM>-002
+#       ...
+#       confidence: low
+#       open_question: <what the code does not settle>
+
+$schema: https://json-schema.org/draft/2020-12/schema
+title: CardDemo business-rule file
+type: object
+additionalProperties: false
+required: [program, source, rules]
+properties:
+  program:
+    description: Program name, upper case, as in the inventory. Must match the file name.
+    type: string
+    pattern: "^[A-Z0-9]{1,8}$"
+  source:
+    description: Path of the program source, relative to the reference clone root.
+    type: string
+    pattern: "^app/[^\\s:]+$"
+  rules:
+    type: array
+    minItems: 1
+    items:
+      $ref: "#/$defs/rule"
+
+$defs:
+  rule:
+    type: object
+    additionalProperties: false
+    required: [id, statement, category, module, citations, confidence]
+    properties:
+      id:
+        description: >-
+          <PROGRAM>-<NNN>, unique within the rule folder. IDs are local to one analyst;
+          A and B rules are matched by citation, not by ID.
+        type: string
+        pattern: "^[A-Z0-9]{1,8}-[0-9]{3}$"
+      statement:
+        description: >-
+          The rule in plain business language: what the system does and when. No COBOL
+          syntax, paragraph names or field names unless the field is visible to users.
+        type: string
+        minLength: 10
+      category:
+        description: Kind of rule.
+        type: string
+        enum:
+          - validation       # input or data checks and the error that follows
+          - calculation      # arithmetic, rounding, derived values
+          - data-access      # which records are read, written, updated or deleted, and keys
+          - navigation       # screen flow, function keys, program transfers
+          - authorization    # sign-on, user type, who may do what
+          - error-handling   # behaviour on file errors, abends, not-found conditions
+          - presentation     # what is shown and how it is formatted
+          - batch-control    # job steps, sequencing, restart, control totals
+          - reporting        # report and statement content
+      module:
+        description: >-
+          Business module the rule belongs to, lower-case kebab-case (for example
+          account, card, transaction, bill-payment, user-admin, sign-on, interest,
+          reporting). Module boundaries are confirmed at gate G2.
+        type: string
+        pattern: "^[a-z][a-z0-9-]*$"
+      citations:
+        description: >-
+          path:line or path:start-end, relative to the reference clone root, at commit
+          59cc6c2fd7ebd7ef7925cad552a01a4b8b6e4d5e. At least one per rule.
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items:
+          type: string
+          pattern: "^[^\\s:/][^\\s:]*:[1-9][0-9]*(-[1-9][0-9]*)?$"
+      confidence:
+        description: >-
+          high: the cited code states the rule directly. medium: the rule follows from
+          the code but depends on data or configuration not seen. low: inferred; must
+          have an open_question.
+        type: string
+        enum: [high, medium, low]
+      open_question:
+        description: What could not be confirmed from the code. Required when confidence is low.
+        type: string
+        minLength: 10
+    if:
+      properties:
+        confidence:
+          const: low
+    then:
+      required: [open_question]
